@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /Usuarios/{personaId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['Usuario'])
+        && request.resource.data.keys().hasOnly(['Usuario'])
+        && request.resource.data.Usuario is string
+        && request.resource.data.Usuario.size() > 0
+        && request.resource.data.Usuario.size() <= 60;
+    }
+
+    match /usuario/{usuarioId} {
+      allow read, write: if request.auth != null && request.auth.uid == usuarioId;
+    }
+
+    match /users/{userId}/tarjetas/{tarjetaId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/creditos/{creditoId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/prestamos/{prestamoId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/meses/{mesId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /tarjetas/{tarjetaId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
