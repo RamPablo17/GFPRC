@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function esCuentaSrTono() {
+      return request.auth != null
+        && request.auth.token.email == 'tonito@gmail.com';
+    }
+
+    function esPropietario(userId) {
+      return request.auth != null
+        && request.auth.uid == userId
+        && !esCuentaSrTono();
+    }
+
+    match /Usuarios/{personaId} {
+      allow read: if request.auth != null && !esCuentaSrTono();
+      allow create: if request.auth != null && !esCuentaSrTono()
+        && request.resource.data.keys().hasAll(['Usuario'])
+        && request.resource.data.keys().hasOnly(['Usuario'])
+        && request.resource.data.Usuario is string
+        && request.resource.data.Usuario.size() > 0
+        && request.resource.data.Usuario.size() <= 60;
+    }
+
+    match /usuario/{usuarioId} {
+      allow read, write: if esPropietario(usuarioId);
+    }
+
+    match /users/{userId}/tarjetas/{tarjetaId} {
+      allow read, write: if esPropietario(userId);
+    }
+
+    match /users/{userId}/creditos/{creditoId} {
+      allow read, write: if esPropietario(userId);
+    }
+
+    match /users/{userId}/prestamos/{prestamoId} {
+      allow read, write: if esPropietario(userId);
+    }
+
+    match /{path=**}/prestamos/{prestamoId} {
+      allow get, list: if esCuentaSrTono()
+        && resource.data.prestamistaNombre == 'Sr. Toño';
+    }
+
+    match /users/{userId}/meses/{mesId} {
+      allow read, write: if esPropietario(userId);
+
+      match /tarjetas/{tarjetaId} {
+        allow read, write: if esPropietario(userId);
+      }
+    }
+  }
+}
